@@ -39,6 +39,7 @@ class _LocationPageState extends State<LocationPage> {
   ];
 
   double distance = 0.0;
+  int timeCalc = 0;
 
 
   @override
@@ -69,17 +70,8 @@ class _LocationPageState extends State<LocationPage> {
 
     super.initState();
   }
-
+///PACE NOTE ALGORITHMS
   Future<void> paceNoteSequence() async {
-    /*for (int start = 0; start < startLocationLists.length - 1; start++) {
-
-      print(start);
-
-    }
-
-    for (int end = 0; end < endLocationLists.length - 1; end++) {
-      print(end);
-    }*/
 
     for (int start = 0; start <= startendLocationLists.length - 2; start++){
       setState(() {
@@ -89,12 +81,30 @@ class _LocationPageState extends State<LocationPage> {
       });
       print('start'+ startLocation.toString());
       print('end'+ endLocation.toString());
-      await Future.delayed(Duration(seconds: 6));
+      await timeToNext();
+      await speak('bump in $timeCalc seconds');
 
+      await Future.delayed(Duration(seconds: timeCalc));
     }
   }
 
-  getDirections() async {
+  Future<int> timeToNext() async {
+
+    //time is given by distance/speed
+    //using actual distance
+    //simulating speed
+    //double time;
+    final double time = await getDirections() / 14.75; //direction(m) / speed(ms) = time(sec)
+    print('Time is: ${time.toStringAsFixed(0)} secs');
+    setState(() {
+      timeCalc = int.parse(time.toStringAsFixed(0));
+    });
+    return timeCalc;
+  }
+///PACE NOTE ALGORITHMS
+  Future<double> getDirections() async {
+    //returning distance for the time to keep function
+
     List<LatLng> polylineCoordinates = [];
 
     PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
@@ -126,10 +136,12 @@ class _LocationPageState extends State<LocationPage> {
     setState(() {
       distance = totalDistance * 1000;
     });
-    await speak("bump in ${distance.toStringAsFixed(0)} meters");
+    //await speak("bump in ${distance.toStringAsFixed(0)} meters");
     //add to the list of poly line coordinates
     addPolyLine(polylineCoordinates);
     print(distance);
+
+    return distance;
   }
 
   speak(String speach) async {
@@ -194,6 +206,8 @@ class _LocationPageState extends State<LocationPage> {
                             child: Column(
                               children: [
                                 Text("Distance is: " + distance.toStringAsFixed(2) + " m",
+                                    style: TextStyle(fontSize: 20, fontWeight:FontWeight.bold)),
+                                Text("Time is: " + timeCalc.toString() + " secs",
                                     style: TextStyle(fontSize: 20, fontWeight:FontWeight.bold)),
                                 /*Text("Start: " + startLocationLists[0].toString() + " LatLng",
                                     style: TextStyle(fontSize: 20, fontWeight:FontWeight.bold)),

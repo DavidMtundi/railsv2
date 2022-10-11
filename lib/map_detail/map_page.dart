@@ -96,7 +96,6 @@ class _TheMapState extends State<TheMap> {
             ),
           ),
         );
-
       });
       //await _getAddress();
     }).catchError((e) {
