@@ -5,10 +5,11 @@ import 'package:railsv2/firebase_options.dart';
 import 'package:railsv2/map_detail/map_page.dart';
 import 'package:railsv2/register/auth_service.dart';
 import 'package:railsv2/register/google_signin.dart';
+import 'package:railsv2/screens/home.dart';
+import 'package:railsv2/screens/login_page.dart';
 
-Future<void> main() async {
-  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
-  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -26,7 +27,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      //home: const MyHomePage(title: 'title'),
+      //home:  Login(),
       home: AuthService().handleAuthState(),
     );
   }
