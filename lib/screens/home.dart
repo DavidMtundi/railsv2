@@ -197,14 +197,14 @@ class _HomeState extends State<Home> {
         children: [
           Items(
               size: size,
-              icon: Icons.home,
+              icon: Icons.wifi_tethering,
               onTap: () {
                 _animationController.reset();
                 /*_pageController.animateToPage(0,
                     duration: Duration(milliseconds: 200),
                     curve: Curves.easeInCubic);*/
               },
-              label: 'Home',
+              label: 'Live',
               color: index == 0
                   ? Theme.of(context).brightness == Brightness.light
                   ? Colors.teal
@@ -214,13 +214,13 @@ class _HomeState extends State<Home> {
                   : Colors.white),
           Items(
               size: size,
-              icon: Icons.add_shopping_cart,
+              icon: Icons.lightbulb_sharp,
               onTap: () {
                 /*_pageController.animateToPage(1,
                     duration: Duration(milliseconds: 200),
                     curve: Curves.easeInCubic);*/
               },
-              label: 'Order',
+              label: 'About',
               color: index == 1
                   ? Theme.of(context).brightness == Brightness.light
                   ? Colors.teal
@@ -230,14 +230,14 @@ class _HomeState extends State<Home> {
                   : Colors.white),
           Items(
               size: size,
-              icon: Icons.chat,
+              icon: Icons.dangerous,
               onTap: () {
                 _animationController.reset();
                 /*_pageController.animateToPage(2,
                     duration: Duration(milliseconds: 200),
                     curve: Curves.easeInCubic);*/
               },
-              label: 'Chat',
+              label: 'Fatal',
               color: index == 2
                   ? Theme.of(context).brightness == Brightness.light
                   ? Colors.teal
@@ -548,7 +548,7 @@ class _HomeState extends State<Home> {
               ? FloatingActionButton(
             heroTag: 'btn1',
                   foregroundColor: Colors.black,
-                  backgroundColor: Colors.white,
+                  backgroundColor: Colors.transparent,
                   child: Icon(Icons.clear_all),
                   onPressed: () {
                     _info = null;

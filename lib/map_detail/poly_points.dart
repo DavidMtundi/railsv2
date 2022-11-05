@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -81,13 +82,43 @@ class _LocationPageState extends State<LocationPage> {
   ///
   CollectionReference bumpsCollection =
       FirebaseFirestore.instance.collection('roads');
+
   Future addBumps() async {
     print('active');
+    var thisPosition = await getGeoPoint();
     // firebase command of adding cordinates to a database array
     bumpsCollection
         .doc('C91')
-        .set({'bumps': FieldValue.arrayUnion(getGeoPoint())}, SetOptions(merge: true))
+        .set({
+          'bumps': FieldValue.arrayUnion([thisPosition])
+        }, SetOptions(merge: true))
         .then((_) => print('Bump Added'))
+        .catchError((error) => print('Add failed: $error'));
+  }
+
+  Future addBlackSpots() async {
+    print('active');
+    var thisPosition = await getGeoPoint();
+    // firebase command of adding cordinates to a database array
+    bumpsCollection
+        .doc('C91')
+        .set({
+          'blackspots': FieldValue.arrayUnion([thisPosition])
+        }, SetOptions(merge: true))
+        .then((_) => print('blackspot Added'))
+        .catchError((error) => print('Add failed: $error'));
+  }
+
+  Future addPotholes() async {
+    print('active');
+    var thisPosition = await getGeoPoint();
+    // firebase command of adding cordinates to a database array
+    bumpsCollection
+        .doc('C91')
+        .set({
+          'potholes': FieldValue.arrayUnion([thisPosition])
+        }, SetOptions(merge: true))
+        .then((_) => print('pothole Added'))
         .catchError((error) => print('Add failed: $error'));
   }
 
@@ -251,62 +282,101 @@ class _LocationPageState extends State<LocationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text("Polyline Calculate Distance"),
-          backgroundColor: Colors.deepPurpleAccent,
-        ),
-        body: Stack(children: [
-          GoogleMap(
-            //Map widget from google_maps_flutter package
-            zoomGesturesEnabled: true, //enable Zoom in, out on map
-            initialCameraPosition: CameraPosition(
-              //initial position in map
-              target: startLocation, //initial position
-              zoom: 14.0, //initial zoom level
-            ),
-            markers: markers, //markers to show on map
-            polylines: Set<Polyline>.of(polylines.values), //polylines
-            mapType: MapType.normal, //map type
-            onMapCreated: (controller) {
-              //method called when map is created
-              setState(() {
-                mapController = controller;
-              });
-            },
+      appBar: AppBar(
+        title: Text("Polyline Calculate Distance"),
+        backgroundColor: Colors.deepPurpleAccent,
+      ),
+      body: Stack(children: [
+        GoogleMap(
+          //Map widget from google_maps_flutter package
+          zoomGesturesEnabled: true, //enable Zoom in, out on map
+          zoomControlsEnabled: false,
+          initialCameraPosition: CameraPosition(
+            //initial position in map
+            target: startLocation, //initial position
+            zoom: 14.0, //initial zoom level
           ),
-          Positioned(
-              bottom: 200,
-              left: 50,
-              child: Container(
-                  child: GestureDetector(
-                onTap: () async {
-                  //await bumpsOnRoad();
-                  //await paceNoteSequence();
+          markers: markers, //markers to show on map
+          polylines: Set<Polyline>.of(polylines.values), //polylines
+          mapType: MapType.normal, //map type
+          onMapCreated: (controller) {
+            //method called when map is created
+            setState(() {
+              mapController = controller;
+            });
+          },
+        ),
+        Positioned(
+            bottom: 200,
+            left: 50,
+            child: Container(
+                child: GestureDetector(
+              onTap: () async {
+                //await bumpsOnRoad();
+                //await paceNoteSequence();
+                await addBumps();
+                print('object');
+              },
+              child: Card(
+                child: Container(
+                    padding: EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        Text(
+                            "Distance is: " +
+                                distance.toStringAsFixed(2) +
+                                " m",
+                            style: TextStyle(
+                                fontSize: 20, fontWeight: FontWeight.bold)),
+                        Text("Time is: " + timeCalc.toString() + " secs",
+                            style: TextStyle(
+                                fontSize: 20, fontWeight: FontWeight.bold)),
+                      ],
+                    )),
+              ),
+            ))),
+      ]),
+      floatingActionButton: Wrap(
+        //will break to another line on overflow
+        direction: Axis.horizontal, //use vertical to show  on vertical axis
+        children: <Widget>[
+          Container(
+              margin: EdgeInsets.all(10),
+              child: FloatingActionButton(
+                onPressed: () async{
                   await addBumps();
-                  print('object');
+                  HapticFeedback.mediumImpact();
                 },
-                child: Card(
-                  child: Container(
-                      padding: EdgeInsets.all(20),
-                      child: Column(
-                        children: [
-                          Text(
-                              "Distance is: " +
-                                  distance.toStringAsFixed(2) +
-                                  " m",
-                              style: TextStyle(
-                                  fontSize: 20, fontWeight: FontWeight.bold)),
-                          Text("Time is: " + timeCalc.toString() + " secs",
-                              style: TextStyle(
-                                  fontSize: 20, fontWeight: FontWeight.bold)),
-                        ],
-                      )),
-                ),
-              ))),
-          FloatingActionButton(onPressed: () async{
-            print('pressed');
-             addBumps;
-          }),
-        ]));
+                backgroundColor: Colors.green[900],
+                child: Icon(Icons.slow_motion_video_rounded),
+              )), //button first
+
+          Container(
+              margin: EdgeInsets.all(10),
+              child: FloatingActionButton(
+                onPressed: () async{
+                  await addPotholes();
+                  HapticFeedback.mediumImpact();
+                },
+                backgroundColor: Colors.brown[900],
+                child: Icon(Icons.pause_circle_outline_outlined),
+              )),
+
+          Container(
+              margin: EdgeInsets.all(10),
+              child: FloatingActionButton(
+                onPressed: () async{
+                  HapticFeedback.mediumImpact();
+                  await addBlackSpots();
+
+                },
+                backgroundColor: Colors.red[900],
+                child: Icon(Icons.dangerous_outlined),
+              )),
+
+          // Add more buttons here
+        ],
+      ),
+    );
   }
 }
