@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:railsv2/data/items.dart';
-import 'package:railsv2/map_detail/location_page.dart';
+import 'package:railsv2/map_detail/poly_points.dart';
+import 'package:railsv2/map_detail/speed_points.dart';
 import 'package:solid_bottom_sheet/solid_bottom_sheet.dart';
 
 import '../register/auth_service.dart';
@@ -308,11 +309,16 @@ class _HomeState extends State<Home> {
               ),
             ),
             ListTile(
-              title: const Text('Item 1'),
+              title: const Text('Polylines'),
               onTap: () {
-                // Update the state of the app.
-                // ...
                 Navigator.push(context, MaterialPageRoute(builder: (context)=>LocationPage()));
+
+              },
+            ),
+            ListTile(
+              title: const Text('Geolocator'),
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context)=>GeolocatorSpeed(title: 'title')));
 
               },
             ),

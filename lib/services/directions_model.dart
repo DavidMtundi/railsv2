@@ -47,7 +47,7 @@ class Directions{
       final leg = data['legs'][0];
       distance = leg['distance']['text'];
       duration = leg['duration']['text'];
-      origin=leg['start_address'] ;
+      origin = leg['start_address'] ;
       dest= leg['end_address'];
     }
 
