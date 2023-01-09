@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +7,7 @@ import 'package:location/location.dart';
 import 'package:railsv2/data/items.dart';
 import 'package:railsv2/map_detail/poly_points.dart';
 import 'package:railsv2/map_detail/speed_points.dart';
+import 'package:railsv2/screens/update.dart';
 import 'package:solid_bottom_sheet/solid_bottom_sheet.dart';
 
 import '../register/auth_service.dart';
@@ -22,6 +24,9 @@ class Home extends StatefulWidget {
   _HomeState createState() => _HomeState();
 }
 
+bool live = false;
+bool about = true;
+bool fatal = false;
 class _HomeState extends State<Home> {
   int index = 0;
   bool _show = false;
@@ -29,6 +34,9 @@ class _HomeState extends State<Home> {
   SolidController _controller = SolidController();
   late AnimationController _animationController;
   //final PageController _pageController = PageController();
+
+  Stream<QuerySnapshot> collectionStream = FirebaseFirestore.instance.collection('users').snapshots();
+  Stream<DocumentSnapshot> documentStream = FirebaseFirestore.instance.collection('roads').doc('B6').collection('books').doc('Live').snapshots();
 
 
   late GoogleMapController _googleMapController;
@@ -153,28 +161,81 @@ class _HomeState extends State<Home> {
           body: Material(
               child: Padding(
                 padding: const EdgeInsets.all(10.0),
-                /*child: ListView.separated(
-                  itemBuilder: (BuildContext context, int index) {
-                    var data = BottomSheetData().bottomSheetTiles[index];
-                    return BottomBarTiles(
-                      color: data['color'],
-                      title: data['title'],
-                      index: index,
-                      image: data['image'],
-                      subtitle: data['sub'],
-                      hasSubtitle: data['hasSub'],
-                      page: data['page'],
-                    );
-                  },
-                  itemCount: BottomSheetData().bottomSheetTiles.length,
-                  separatorBuilder: (BuildContext context, int index) {
-                    return Divider();
-                  },
-                ),*/
-                child: Container(
-                  width: 50,
-                  height: 40,
-                  color: Colors.red,
+                child:Container(
+                  child: StreamBuilder(
+                      stream:  documentStream,
+                      builder: (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+                        if (snapshot.hasError) {
+                          return Text('Something went wrong');
+                        }
+
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return Text("Loading");
+                        }
+                        var res = snapshot.data!.data() as Map<String, dynamic>;
+
+                        if(live){
+                          return  Card(
+
+                            child: SingleChildScrollView(
+                              child: Column(
+                                children: [
+                                  Text(res['Title']??res['Author']??res['bus'],style: TextStyle(fontWeight: FontWeight.bold),),
+                                  Divider(),
+                                  ListTile(
+                                    leading: CircleAvatar(child: Text(res['Author']??res['matatu']??res['risks'])),
+                                    title: Text(res['Comment']??res['matatu']??res['risks']),
+                                    //trailing: Text(res['Title']),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }
+                        if(about){
+                          print(live );
+                          print(about);
+                        print(fatal);
+                          return  Card(
+
+                            child: Column(
+                              children: [
+                                Text(res['Route'],style: TextStyle(fontWeight: FontWeight.bold),),
+                                Divider(),
+                                ListTile(
+                                  leading: CircleAvatar(child: Text(res['Author'])),
+                                  title: Text(res['Risks']),
+                                  //trailing: Text(res['Title']),
+                                ),
+                                ListTile(
+                                  leading: CircleAvatar(child: Text(res['Author'])),
+                                  title: Text(res['potholes']),
+                                  //trailing: Text(res['Title']),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+                        if(fatal){
+
+                        }
+                        /*return  Card(
+
+                          child: Column(
+                            children: [
+                              Text(res['Title'],style: TextStyle(fontWeight: FontWeight.bold),),
+                              Divider(),
+                              ListTile(
+                                leading: CircleAvatar(child: Text(res['Author'])),
+                                title: Text(res['Comment']),
+                                //trailing: Text(res['Title']),
+                              ),
+                            ],
+                          ),
+                        );*/
+                        return Container();
+                      },
+                  ),
                 ),
               )),
         ),
@@ -186,6 +247,7 @@ class _HomeState extends State<Home> {
 
   ///WIDGET BOTTOMBAR
   ///
+//access streams
 
   Widget bottomBarRow() {
     Size size = MediaQuery.of(context).size;
@@ -199,10 +261,16 @@ class _HomeState extends State<Home> {
               size: size,
               icon: Icons.wifi_tethering,
               onTap: () {
-                _animationController.reset();
+               // _animationController.reset();
                 /*_pageController.animateToPage(0,
                     duration: Duration(milliseconds: 200),
                     curve: Curves.easeInCubic);*/
+                setState(() {
+                  live == true;
+                  about == false;
+                  fatal == false;
+                  documentStream = FirebaseFirestore.instance.collection('roads').doc('B6').collection('books').doc('Live').snapshots();
+                });
               },
               label: 'Live',
               color: index == 0
@@ -216,9 +284,12 @@ class _HomeState extends State<Home> {
               size: size,
               icon: Icons.lightbulb_sharp,
               onTap: () {
-                /*_pageController.animateToPage(1,
-                    duration: Duration(milliseconds: 200),
-                    curve: Curves.easeInCubic);*/
+                setState(() {
+                  live == false;
+                  about == true;
+                  fatal == false;
+                  documentStream = FirebaseFirestore.instance.collection('roads').doc('B6').collection('books').doc('About').snapshots();
+                });
               },
               label: 'About',
               color: index == 1
@@ -232,10 +303,12 @@ class _HomeState extends State<Home> {
               size: size,
               icon: Icons.dangerous,
               onTap: () {
-                _animationController.reset();
-                /*_pageController.animateToPage(2,
-                    duration: Duration(milliseconds: 200),
-                    curve: Curves.easeInCubic);*/
+                setState(() {
+                  live == false;
+                  about == false;
+                  fatal == true;
+                  documentStream = FirebaseFirestore.instance.collection('roads').doc('B6').collection('books').doc('Fatal').snapshots();
+                });
               },
               label: 'Fatal',
               color: index == 2
@@ -298,6 +371,7 @@ class _HomeState extends State<Home> {
                         child: ClipRRect(
                             borderRadius:
                             BorderRadius.circular(32.5),
+                            child: Image.asset('assets/rail_logo.png'),
                             //child: Image.network(user!.photoURL.toString())
                         ),
                       ),
@@ -309,13 +383,15 @@ class _HomeState extends State<Home> {
               ),
             ),
             ListTile(
-              title: const Text('Polylines'),
+              leading: Icon(Icons.cable_rounded),
+              title: const Text('PaceNotes'),
               onTap: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context)=>LocationPage()));
 
               },
             ),
             ListTile(
+              leading: Icon(Icons.location_history_outlined),
               title: const Text('Geolocator'),
               onTap: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context)=>GeolocatorSpeed(title: 'title')));
@@ -323,6 +399,31 @@ class _HomeState extends State<Home> {
               },
             ),
             ListTile(
+              leading: Icon(Icons.cloud_circle),
+              title: const Text('Update'),
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context)=>UpdatePage()));
+
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.chat),
+              title: const Text('FAQ'),
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context)=>GeolocatorSpeed(title: 'title')));
+
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.help),
+              title: const Text('Help'),
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context)=>GeolocatorSpeed(title: 'title')));
+
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.logout),
               title: const Text('SignOut'),
               onTap: () {
                 CupertinoAlertDialog(
@@ -427,6 +528,7 @@ class _HomeState extends State<Home> {
                           points: _info!.polylinePoints
                               .map((e) {
                                 print(e);
+                                print(_info);
                                 return LatLng(e.latitude, e.longitude);
                               })
                               .toList())

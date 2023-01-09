@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
@@ -124,6 +126,8 @@ class _LocationPageState extends State<LocationPage> {
 
   double distance = 0.0;
   int timeCalc = 0;
+  double posdis = 0.0;
+  double speed = 0.0;
 
   @override
   void initState() {
@@ -172,10 +176,96 @@ class _LocationPageState extends State<LocationPage> {
       print('start' + startLocation.toString());
       print('end' + endLocation.toString());
       await timeToNext();
+      await reachedSpot();
+      await getCurrentSpeed();
       await speak('bump in $timeCalc seconds');
 
       await Future.delayed(Duration(seconds: timeCalc));
     }
+  }
+
+  Future<double> reachedSpot() async{
+    //checking whether the bump/ pothole has been reached
+    var myPos = await getMyPosition();
+    //check the distance between
+    List<LatLng> polylineCoordinates = [];
+
+    PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
+      googleAPiKey,
+      PointLatLng(myPos.latitude, myPos.longitude),
+      PointLatLng(endLocation.latitude, endLocation.longitude),
+      travelMode: TravelMode.driving,
+    );
+
+    if (result.points.isNotEmpty) {
+      result.points.forEach((PointLatLng point) {
+        polylineCoordinates.add(LatLng(point.latitude, point.longitude));
+        print('poly ${point.latitude} poly ${point.longitude}');
+      });
+    } else {
+      print(result.errorMessage);
+    }
+
+    //polylineCoordinates is the List of longitute and latidtude.
+    double totalDistance = 0;
+    for (var i = 0; i < polylineCoordinates.length - 1; i++) {
+      totalDistance += calculateDistance(
+          polylineCoordinates[i].latitude,
+          polylineCoordinates[i].longitude,
+          polylineCoordinates[i + 1].latitude,
+          polylineCoordinates[i + 1].longitude);
+    }
+    print(totalDistance);
+
+    setState(() {
+      posdis = totalDistance * 1000;
+    });
+    //await speak("bump in ${distance.toStringAsFixed(0)} meters");
+    //add to the list of poly line coordinates
+    newPolyLine(polylineCoordinates);
+    print(posdis);
+
+    return posdis;
+  }
+
+  //move to next point of interest
+  moveToNext() async {
+    var dist = await reachedSpot();
+
+    if (dist <= 10.0) {
+      for (int start = 0; start <= startendLocationLists.length - 2; start++) {
+        setState(() {
+          startLocation = startendLocationLists[start];
+          endLocation = startendLocationLists[start + 1];
+          getDirections();
+        });
+        print('start' + startLocation.toString());
+        print('end' + endLocation.toString());
+        await timeToNext();
+        await reachedSpot();
+        await speak('bump in $timeCalc seconds');
+      }
+    }
+  }
+
+  Future<double> getCurrentSpeed() async {
+    var options = const LocationSettings(
+      accuracy: LocationAccuracy.high,
+      distanceFilter: 10,
+    );
+
+    StreamSubscription<Position> positionSpeed =
+    Geolocator.getPositionStream(locationSettings: options)
+        .listen((position) {
+       var speedInMps = position.speed;
+       setState(() {
+         speed = speedInMps;
+       });
+      print('your speed is: $speedInMps MpS');
+      //print('your speed is: ${double.parse(speedInMps) * 3.6} KpH');
+    });
+    print(positionSpeed);
+    return speed;
   }
 
   Future<int> timeToNext() async {
@@ -255,6 +345,18 @@ class _LocationPageState extends State<LocationPage> {
     setState(() {});
   }
 
+  newPolyLine(List<LatLng> polylineCoordinates) {
+    PolylineId id = PolylineId("poly");
+    Polyline polyline = Polyline(
+      polylineId: id,
+      color: Colors.deepOrange,
+      points: polylineCoordinates,
+      width: 8,
+    );
+    polylines[id] = polyline;
+    setState(() {});
+  }
+
   double calculateDistance(lat1, lon1, lat2, lon2) {
     var p = 0.017453292519943295;
     var a = 0.5 -
@@ -312,9 +414,10 @@ class _LocationPageState extends State<LocationPage> {
             child: Container(
                 child: GestureDetector(
               onTap: () async {
+                //await getCurrentSpeed();
                 //await bumpsOnRoad();
-                //await paceNoteSequence();
-                await addBumps();
+                await paceNoteSequence();
+                //await addBumps();
                 print('object');
               },
               child: Card(
@@ -331,6 +434,12 @@ class _LocationPageState extends State<LocationPage> {
                         Text("Time is: " + timeCalc.toString() + " secs",
                             style: TextStyle(
                                 fontSize: 20, fontWeight: FontWeight.bold)),
+                        Text("Pos to Dis: " + posdis.toStringAsFixed(2) + " m",
+                            style: TextStyle(
+                                fontSize: 20, fontWeight: FontWeight.bold)),
+                        Text("Speed: " + speed.toStringAsFixed(2) + " m/s",
+                            style: TextStyle(
+                                fontSize: 20, fontWeight: FontWeight.bold)),
                       ],
                     )),
               ),
@@ -343,6 +452,7 @@ class _LocationPageState extends State<LocationPage> {
           Container(
               margin: EdgeInsets.all(10),
               child: FloatingActionButton(
+                heroTag: 1,
                 onPressed: () async{
                   await addBumps();
                   HapticFeedback.mediumImpact();
@@ -354,6 +464,7 @@ class _LocationPageState extends State<LocationPage> {
           Container(
               margin: EdgeInsets.all(10),
               child: FloatingActionButton(
+                heroTag: 2,
                 onPressed: () async{
                   await addPotholes();
                   HapticFeedback.mediumImpact();
@@ -365,10 +476,10 @@ class _LocationPageState extends State<LocationPage> {
           Container(
               margin: EdgeInsets.all(10),
               child: FloatingActionButton(
+                heroTag: 3,
                 onPressed: () async{
                   HapticFeedback.mediumImpact();
                   await addBlackSpots();
-
                 },
                 backgroundColor: Colors.red[900],
                 child: Icon(Icons.dangerous_outlined),

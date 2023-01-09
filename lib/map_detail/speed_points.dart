@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 
-
 class GeolocatorSpeed extends StatefulWidget {
   const GeolocatorSpeed({Key? key, required this.title}) : super(key: key);
 
@@ -23,27 +22,22 @@ class _GeolocatorSpeedState extends State<GeolocatorSpeed> {
   }
 
   void _getCurrentSpeed() async {
-    var options = const
-        LocationSettings(
-            accuracy: LocationAccuracy.high,
-            distanceFilter: 10,
-        );
+    var options = const LocationSettings(
+      accuracy: LocationAccuracy.high,
+      distanceFilter: 10,
+    );
 
     StreamSubscription<Position> positionSpeed =
-         Geolocator.getPositionStream(locationSettings: options)
+        Geolocator.getPositionStream(locationSettings: options)
             .listen((position) {
       var speedInMps = position.speed.toStringAsPrecision(2);
       //var bumpProximity = position.
       print('your speed is: $speedInMps MpS');
       print('your speed is: ${double.parse(speedInMps) * 3.6} KpH');
-
-
-         });
+    });
   }
 
-  void _getProximity() async {
-
-  }
+  void _getProximity() async {}
 
   void _getCurrentLocation() async {
     Position position = await _determinePosition();

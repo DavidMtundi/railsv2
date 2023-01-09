@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
-import '../map_detail/location_page.dart';
+import '../map_detail/poly_points.dart';
 import '../screens/home.dart';
 
 
@@ -16,7 +16,7 @@ import '../screens/home.dart';
           if (snapshot.hasData) {
             return Home();
           } else {
-            return LocationPage();
+            return Home();
           }
         });
   }
